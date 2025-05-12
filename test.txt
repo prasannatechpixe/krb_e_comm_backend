@@ -1,0 +1,316 @@
+exports.createOrder = async (req, res) => {
+  const { token, amount, currency } = req.body;
+
+  if (!token || !amount || !currency) {
+    return res.status(400).json({ success: false, message: 'Provide all required parameters: token, amount, and currency.', statuscode: 1 });
+  } else {
+    getUserProfileFromToken(token, async (err, foundUser) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message, responsecode: 500, });
+      } else if (foundUser) {
+        const userId = foundUser.id;
+        const request = new paypal.orders.OrdersCreateRequest();
+        request.prefer("return=representation");
+        request.requestBody({
+          intent: 'CAPTURE',
+          purchase_units: [
+            {
+              amount: {
+                currency_code: currency,
+                value: amount,
+              },
+            },
+          ],
+        });
+
+        try {
+          const order = await client.execute(request);
+          const approvalLink = order.result.links.find(link => link.rel === 'approve');
+          const orderId = order.result.id;
+          const orderCurrency = currency;
+          const orderStatus = order.result.status;
+          const query = `INSERT INTO public."Payments" (user_id, order_id, payment_method, amount, currency_code, status) VALUES ($1, $2, $3, $4, $5, $6);`;
+          const values = [userId, orderId, 'PayPal', amount, orderCurrency, orderStatus];
+
+          Client.query(query, values, (dbErr, result) => {
+            if (dbErr) {
+              return res.status(500).json({ success: false, message: 'Database insertion failed: ' + dbErr.message, });
+            } else {
+              return res.status(200).json({ success: true, message: 'Order created successfully. Redirect the user to the approval link.', approvalUrl: approvalLink.href, orderDetails: order.result });
+            }
+          });
+        } catch (paypalErr) {
+          return res.status(500).json({ success: false, message: 'PayPal API error: ' + paypalErr.message });
+        }
+      } else {
+        return res.status(401).json({ success: false, message: 'User not found', responsecode: 401 });
+      }
+    });
+  }
+};
+
+
+const profilePicUpload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, PicUpload);
+        },
+        filename: (req, file, cb) => {
+            const uniqueSuffix = `${Date.now()}-${file.originalname}`;
+            if (!req.savedFileNames) {
+                req.savedFileNames = []; // Initialize array to store filenames
+            }
+            req.savedFileNames.push(uniqueSuffix); // Push filename to array
+            cb(null, uniqueSuffix); // Save file with unique filename
+        },
+    }),
+    limits: { fileSize: 10 * 1024 * 1024 }, // Limit file size to 10 MB
+    fileFilter(req, file, cb) {
+        if (!file) {
+            cb(new Error('No file passed'), false);
+        } else if (file.mimetype.startsWith('image/')) {
+            cb(null, true); // Accept the file
+        } else {
+            cb(new Error('Only image files are allowed'), false);
+        }
+    }
+});
+
+
+
+
+// Get all Payments
+exports.getPayments = async (req, res) => {
+  try {
+    const items = await Payment.findAll();
+    res.status(200).json({ success: true, data: items });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get a single Payment by ID
+exports.getPaymentById = async (req, res) => {
+  try {
+    const item = await Payment.findByPk(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: 'Payment not found' });
+    res.status(200).json({ success: true, data: item });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update a Payment by ID
+exports.updatePayment = async (req, res) => {
+  try {
+    const [updated] = await Payment.update(req.body, { where: { id: req.params.id } });
+    if (!updated) return res.status(404).json({ success: false, message: 'Payment not found' });
+    const updatedItem = await Payment.findByPk(req.params.id);
+    res.status(200).json({ success: true, data: updatedItem });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Delete a Payment by ID
+exports.deletePayment = async (req, res) => {
+  try {
+    const deleted = await Payment.destroy({ where: { id: req.params.id } });
+    if (!deleted) return res.status(404).json({ success: false, message: 'Payment not found' });
+    res.status(200).json({ success: true, message: 'Payment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// Configure PayPal Environment
+// const environment = new paypal.core.SandboxEnvironment(
+//   process.env.PAYPAL_CLIENT_ID,
+//   process.env.PAYPAL_CLIENT_SECRET
+// );
+// const client = new paypal.core.PayPalHttpClient(environment);
+
+// getting access token form paypal.
+const getPayPalAccessToken = async () => {
+  try {
+    const url = `${process.env.PAYPAL_REDIRECT_BASE_URL}/v1/oauth2/token`;
+    const response = await axios.post(
+      url,
+      new URLSearchParams({ grant_type: 'client_credentials' }).toString(),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        auth: {
+          username: process.env.PAYPAL_CLIENT_ID,
+          password: process.env.PAYPAL_CLIENT_SECRET,
+        },
+      }
+    );
+    return response.data.access_token; // Return the access token
+  } catch (error) {
+    if (error.response) {
+      return error.response;
+    } else {
+      return error.message;
+    }
+  }
+};
+
+// Create Order
+// exports.createOrder = async (req, res) => {
+//   const { token, amount, currency } = req.body;
+
+//   if (!token || !amount || !currency) {
+//     return res.status(400).json({ success: false, message: 'Provide all required parameters: token, amount, and currency.', statuscode: 1 });
+//   } else {
+//     getUserProfileFromToken(token, async (err, foundUser) => {
+//       if (err) {
+//         return res.status(500).json({ success: false, message: err.message, responsecode: 500, });
+//       } else if (foundUser) {
+//         const userId = foundUser.id;
+//         try {
+//           // Get PayPal Access Token
+//           const paypalToken = await getPayPalAccessToken();
+//           // Define the PayPal Order Creation Endpoint
+//           const url = `${process.env.PAYPAL_REDIRECT_BASE_URL}/v2/checkout/orders`;
+//           // Make API Request to Create Order
+//           const response = await axios.post(
+//             url,
+//             {
+//               intent: 'CAPTURE',
+//               purchase_units: [
+//                 {
+//                   items: [
+//                     {
+//                       name: 'KBR Metal Detectors',
+//                       description: 'Purchase Description',
+//                       quantity: 1,
+//                       unit_amount: {
+//                         currency_code: currency,
+//                         value: amount,
+//                       },
+//                     },
+//                   ],
+//                   amount: {
+//                     currency_code: currency,
+//                     value: amount,
+//                     breakdown: {
+//                       item_total: {
+//                         currency_code: currency,
+//                         value: amount,
+//                       },
+//                     },
+//                   },
+//                 },
+//               ],
+//               payment_source: {
+//                 paypal: {
+//                   experience_context: {
+//                     payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+//                     payment_method_selected: "PAYPAL",
+//                     brand_name: "KBR Metal Detectors",
+//                     shipping_preference: "NO_SHIPPING",
+//                     user_action: "PAY_NOW"
+//                   },
+//                 },
+//               },
+//             },
+//             {
+//               headers: {
+//                 'Content-Type': 'application/json',
+//                 Authorization: `Bearer ${paypalToken}`,
+//               },
+//             }
+//           );
+//           const orderId = response.data.id;
+//           const orderCurrency = currency;
+//           const orderStatus = 'Created';
+//           const query = `INSERT INTO public."Payments" (user_id, order_id, payment_method, amount, currency_code, status) VALUES ($1, $2, $3, $4, $5, $6);`;
+//           const values = [userId, orderId, 'PayPal', amount, orderCurrency, orderStatus];
+
+//           Client.query(query, values, (dbErr, result) => {
+//             if (dbErr) {
+//               return res.status(500).json({ success: false, message: 'Database insertion failed: ' + dbErr.message, });
+//             } else if (result.rowCount === 1) {
+//               return res.status(200).json({ success: true, message: 'Order created.', orderId });
+//             } else {
+//               return res.status(500).json({ success: false, message: 'Database insertion failed: ', log: dbErr.message });
+//             }
+//           });
+//         } catch (paypalErr) {
+//           return res.status(500).json({ success: false, message: 'PayPal API error: ' + paypalErr.message });
+//         }
+//       } else {
+//         return res.status(401).json({ success: false, message: 'User not found', responsecode: 401 });
+//       }
+//     });
+//   }
+// };
+
+// Capture Payment
+// exports.captureOrder = async (req, res) => {
+//   const { orderID, token, productIds, paypal_response } = req.body;
+//   if (!orderID || !token || !productIds || !paypal_response) {
+//     return res.status(400).json({ success: false, message: 'Provide all required parameters', statuscode: 1 });
+//   } else {
+//     getUserProfileFromToken(token, async (err, foundUser) => {
+//       if (err) {
+//         return res.status(500).json({ success: false, message: 'Error fetching user profile: ' + err.message, statuscode: 500 });
+//       } else if (!foundUser) {
+//         return res.status(401).json({ success: false, message: 'User not found.', statuscode: 401 });
+//       }
+
+//       const userId = foundUser.id;
+//       const request = new paypal.orders.OrdersCaptureRequest(orderID);
+//       request.requestBody({});
+
+//       try {
+//         const capture = await client.execute(request);
+//         const captureDetails = capture.result;
+//         // Extract payment details
+//         const paymentMethod = 'PayPal';
+//         const amount = captureDetails.purchase_units[0].payments.captures[0].amount.value;
+//         const currencyCode = captureDetails.purchase_units[0].payments.captures[0].amount.currency_code;
+//         const status = captureDetails.status;
+
+//         // Save payment details to the database
+//         const paymentQuery = `INSERT INTO public."Payments" (user_id, order_id, payment_method, amount, currency_code, status) 
+//           VALUES ($1, $2, $3, $4, $5, $6);`;
+//         const paymentValues = [userId, orderID, paymentMethod, amount, currencyCode, status];
+//         Client.query(paymentQuery, paymentValues, (dbErr, PaymentDone) => {
+//           if (dbErr) {
+//             return res.status(500).json({ success: false, message: 'Database insertion failed: ' + dbErr.message });
+//           } else if (PaymentDone.rowCount > 0) {
+//             if (status === 'COMPLETED') {
+//               // Loop through each product ID and insert into Orders table
+//               for (const productId of productIds) {
+//                 const orderQuery = `INSERT INTO public."Orders"("userId", "totalAmount", paymentStatus, "paymentMethod","productId",paypal_response) VALUES ( $1, $2, $3, $4, $5, $6);`;
+//                 const orderValues = [userId, amount, status, paymentMethod, productId, paypal_response];
+//                 client.query(orderQuery, orderValues, (dbErr, orderResult) => {
+//                   if (dbErr) {
+//                     return res.status(500).json({ success: false, message: 'Database insertion failed: ' + dbErr.message });
+//                   }
+//                 });
+//               }
+//               return res.status(200).json({ success: true, message: 'Order added successfully', status: 'added' });
+//             } else {
+//               return res.status(200).json({ success: false, message: 'Payment failed', captureDetails });
+//             }
+//           } else {
+//             return res.status(500).json({ success: false, message: 'Database insertion failed: ', log: dbErr.message });
+//           }
+//         });
+//       } catch (paypalErr) {
+//         const errorDetails = paypalErr.response?.details?.[0]?.issue;
+
+//         if (errorDetails === 'ORDER_NOT_APPROVED') {
+//           return res.status(400).json({ success: false, message: 'Payment not approved. Please approve the payment first.', approve_url: 'Redirect the user to the approval URL returned from CreateOrder.' });
+//         }
+//         return res.status(500).json({ success: false, message: 'PayPal API error: ', paypalErr: paypalErr.message, statuscode: 8 });
+//       }
+//     });
+//   };
+// };
+

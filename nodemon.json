@@ -1,0 +1,5 @@
+{
+    "ext": ".json,.yaml,.yml,.js,.env",
+    "exec": "node server.js"
+  }
+  
