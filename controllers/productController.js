@@ -17,7 +17,8 @@ const serverIp = en0.find((iface) => iface.family === 'IPv4')?.address || '127.0
 // Define upload directory based on environment
 const domain = process.env.NODE_ENV === 'production' ? 'camcapture.smartaihr.com' : 'localhost:3000';
 
-// Get all products (Anyone)
+
+
 exports.getAllProducts = async (req, res) => {
   const { page, limit, showIn, token } = req.body;
   const offset = (page - 1) * limit;
@@ -30,7 +31,7 @@ exports.getAllProducts = async (req, res) => {
           return res.status(500).json({ success: false, message: err.message, responsecode: 500 });
         } else if (foundUser.role === 'admin') {
           const query = `
-          SELECT id, name, price_in_usd, price_in_inr, description, images, "showIn" ,features,"useCase"
+          SELECT id, name, price_in_usd, price_in_inr, description, images
           FROM public."Products" 
           WHERE "isPublished" = true 
           ORDER BY id 
@@ -56,23 +57,29 @@ exports.getAllProducts = async (req, res) => {
     } else {
       try {
         const query1 = `
-          SELECT id, name, price_in_usd, price_in_inr, description, images, "showIn" ,features,"useCase"
+          SELECT id, name, price_in_usd, price_in_inr, description, images
           FROM public."Products" 
-          WHERE "isPublished" = true AND "showIn" = $1 
-          ORDER BY id 
+          WHERE "isPublished" = true AND "showIn" @> $1::jsonb
+          ORDER BY "createdAt" 
           LIMIT $2 
           OFFSET $3`;
 
         const query2 = `
-          SELECT id, name, price_in_usd, price_in_inr, description, images, "showIn" ,features,"useCase"
+          SELECT id, name, price_in_usd, price_in_inr, description, images
           FROM public."Products" 
           WHERE "isPublished" = true 
-          ORDER BY id 
+          ORDER BY "createdAt" 
           LIMIT $1 
           OFFSET $2`;
 
         const finalQuery = showIn === 'All' ? query2 : query1; // Use query2 for ALL
-        const finalValues = showIn === 'All' ? [limit, offset] : [showIn, limit, offset]; // Use appropriate values
+        let finalValues;
+
+        if (showIn === 'All') {
+          finalValues = [limit, offset];
+        } else {
+          finalValues = [`["${showIn}"]`, limit, offset]; // Correctly format showIn
+        }
 
         const productsData = await client.query(finalQuery, finalValues);
 
@@ -92,7 +99,6 @@ exports.getAllProducts = async (req, res) => {
     }
   }
 };
-
 
 // Get a product by ID (Anyone)
 exports.getProductById = async (req, res) => {
@@ -213,6 +219,7 @@ exports.createProduct = async (req, res) => {
   const parsedSpecifications = parseJSON(specifications, []);
   const parsedYoutubeLinks = parseJSON(youtubeLinks, []);
   const parsedManual = parseJSON(manual, []);
+  const parsedshowIn = parseJSON(showIn, []);
   // const parsedFeatures = parseJSON(features, []);
 
   // Validate parsed specifications
@@ -257,7 +264,7 @@ exports.createProduct = async (req, res) => {
         brandId,
         parseFloat(rating),
         JSON.stringify(imageUrls), // Convert array to JSON
-        showIn,
+        parsedshowIn,
         tags,
         parsedSpecifications, // JSON data
         isPublished === "true" || isPublished === true,
@@ -406,6 +413,7 @@ exports.updateProduct = async (req, res) => {
       const parsedYoutubeLinks = parseJSON(youtubeLinks, []);
       const parsedManual = parseJSON(manual, []);
       const parsedFeatures = parseJSON(features, []);
+      const parsedshowIn = parseJSON(showIn, []);
 
       const updateQuery = `
         UPDATE public."Products"
@@ -447,7 +455,7 @@ exports.updateProduct = async (req, res) => {
         brandId || null,
         parseFloat(rating) || null,
         imageUrls ? JSON.stringify(imageUrls) : null,
-        showIn || null,
+        parsedshowIn || null,
         tags || null,
         parsedSpecifications || null,
         isPublished === "true" || isPublished === true,
@@ -455,7 +463,7 @@ exports.updateProduct = async (req, res) => {
         parsedYoutubeLinks || null,
         parsedManual || null,
         product_details || null,
-        features,
+        parsedFeatures,
         useCase || false,
       ];
 

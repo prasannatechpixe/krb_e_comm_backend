@@ -58,8 +58,8 @@ const Product = sequelize.define('Product', {
     defaultValue: [], // Default is an empty array
   },
   showIn: {
-    type: DataTypes.ENUM('All', 'Featured', 'Best Selling', 'Recommended', 'New Arrival'),
-    defaultValue: 'All', // Default is All products. Can be 'All', 'Featured', 'Best Selling', etc.
+    type: DataTypes.JSONB,
+    defaultValue: ['All'], // Default is ['All']
     allowNull: false,
   },
   tags: {
@@ -93,6 +93,11 @@ const Product = sequelize.define('Product', {
     type: DataTypes.TEXT,
     allowNull: true,
     defaultValue: '',
+  },
+  multiShowIn: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: [],
   },
   features: {
     type: DataTypes.BOOLEAN,

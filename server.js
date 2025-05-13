@@ -146,7 +146,7 @@ app.use((req, res, next) => {
 });
 
 // ==== SERVER START ====
-const PORT = process.env.SERVER_PORT || 3002;
+const PORT = process.env.SERVER_PORT || 3000;
 const server = app.listen(PORT, '127.0.0.1', (err) => {
     if (err) {
         console.error(err.message);

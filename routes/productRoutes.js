@@ -5,7 +5,7 @@ const imageupload = require('../middlewares/productimageuploader');
 const pdfUpload = require('../middlewares/pdfuploader');
 
 // Product routes
-router.post('/', productController.getAllProducts);
+router.post('/getall', productController.getAllProducts);
 router.post('/byid/:id', productController.getProductById);
 router.post('/add', imageupload.array('images', 10), productController.createProduct);
 router.put('/productmanualupload', pdfUpload.single('manual'), productController.productManual);

@@ -9,9 +9,9 @@ info:
     email: srikrishna@techpixe.com
 
 servers:
-  - url: http://localhost:3002
+  - url: http://localhost:3000
     description: Localhost Server
-  - url: https://camcapture.smartaihr.com
+  - url: http://147.79.17:3000
     description: Production Server
 
 tags:
