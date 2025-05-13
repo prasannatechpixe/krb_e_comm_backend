@@ -206,3 +206,35 @@ exports.deleteCart = (req, res) => {
     });
   };
 };
+
+
+exports.cartcount = (req,res) =>{
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({ success: false, message: "Missing access token", responsecode: 400 });
+  } else {
+    getUserProfileFromToken(token, async (err, foundUser) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message, responsecode: 500 });
+      }
+      else if (!foundUser) {
+        return res.status(401).json({ success: false, message: "User not found", responsecode: 401 });
+      } else {
+        try {
+          const userId = foundUser.id;
+          const query = `SELECT COUNT(*) FROM "Carts" WHERE "userId" = $1;`;
+          const values = [userId];  
+          client.query(query, values, (err, result) => {
+            if (err) {
+              return res.status(500).json({ success: false, message: err.message, responsecode: 500 });
+            } else {
+              return res.status(200).json({ success: true, count: result.rows[0].count, responsecode: 200 });
+            }
+          });
+        } catch (error) {
+          return res.status(500).json({ success: false, message: error.message, responsecode: 500 });
+        }
+      }
+    });
+  }
+}

@@ -11,7 +11,7 @@ info:
 servers:
   - url: http://localhost:3000
     description: Localhost Server
-  - url: http://147.79.17:3000
+  - url: https://camcapture.smartaihr.com
     description: Production Server
 
 tags:
@@ -322,95 +322,111 @@ paths:
               properties:
                 name:
                   type: string
-                  description: Name of the product
-                  example: Wireless Bluetooth Headphones
+                  description: "Name of the product"
+                  example: "Wireless Headphones"
                 description:
                   type: string
-                  description: Description of the product
-                  example: High-quality headphones with noise cancellation.
+                  description: "Detailed description of the product"
+                  example: "High-quality wireless headphones with noise cancellation"
                 price_in_usd:
                   type: number
-                  description: Price of the product in USD
-                  example: 99.99
+                  format: decimal
+                  description: "Price in USD"
+                  example: 199.99
                 price_in_inr:
                   type: number
-                  description: Price of the product in INR
-                  example: 8299
+                  format: decimal
+                  description: "Price in INR"
+                  example: 14999.99
                 discountPrice:
                   type: number
-                  description: Discount percentage (if applicable)
-                  example: 10
+                  format: float
+                  description: "Discounted price"
+                  example: 179.99
                 stock:
-                  type: number
-                  description: Total number of products in stock
-                  example: 10
+                  type: integer
+                  description: "Stock quantity available"
+                  example: 50
                 categoryId:
-                  type: number
-                  description: Category ID the product belongs to
-                  example: 1
+                  type: string
+                  description: "Category ID the product belongs to"
+                  example: "electronics"
                 brandId:
-                  type: number
-                  description: Brand ID the product belongs to
-                  example: 2
-                rating:
-                  type: number
-                  description: Rating of the product
-                  example: 4.5
-                showIn:
                   type: string
-                  description: Where the product is displayed
-                  example: All, Featured, Best Selling, Recommended, New Arrival
-                tags:
-                  type: string
-                  description: Related tags for the product
-                  example: metals, bronze
-                specifications:
-                  type: array
-                  items:
-                    type: string
-                  example: ["Bluetooth", "Headphones", "Wireless"]
-                isPublished:
-                  type: boolean
-                  description: Publish status (true/false)
-                  example: true
-                availability:
-                  type: string
-                  description: Product availability status
-                  example: In Stock, Out of Stock, Pre-order
-                youtubeLinks:
-                  type: array
-                  items:
-                    type: string
-                  description: List of YouTube links related to the product
-                  example: ["https://youtube.com/example","https://youtube.com/elpmaxe"]  
-                manual:
-                  type: array
-                  items:
-                    type: string
-                  description: List of manual/documentation links
-                  example: ["https://youtube.com/example"] 
-                product_details:
-                  type: string
-                  description: Complete product details
-                  example: All-inclusive Detector for treasure hunters with highest demands - including all features. Measuring depth: customers found objects up to 25m (82ft) deep. Use cases: treasure hunting, gold prospecting, cavity detection.
-                features:
-                  type: boolean
-                  description: Features availability (true/false)
-                  example: true
-                token:
-                  type: string
-                  description: User authentication token
-                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  description: "Brand ID the product belongs to"
+                  example: "sony"
                 useCase:
                   type: boolean
-                  description: Use case applicability (true/false)
-                  example: true
+                  description: "Whether the product is meant for a specific use case"
+                  example: false
+                rating:
+                  type: number
+                  format: float
+                  description: "Average rating of the product"
+                  example: 4.5
                 images:
                   type: array
                   items:
                     type: string
-                    format: binary
-                  description: Uploaded product images
+                    format: uri
+                  description: "List of image URLs for the product"
+                  example:
+                    - "https://example.com/image1.jpg"
+                    - "https://example.com/image2.jpg"
+                showIn:
+                  type: array
+                  items:
+                    type: string
+                  description: "Where the product should be displayed"
+                  example: ["Featured", "Best Selling"]
+                tags:
+                  type: string
+                  description: "Search tags related to the product"
+                  example: "wireless, headphones, audio"
+                Availability:
+                  type: string
+                  enum: ["In Stock", "Out of Stock", "Pre-order"]
+                  description: "Availability status of the product"
+                  example: "In Stock"
+                specifications:
+                  type: object
+                  description: "Product specifications such as color, size, etc."
+                  example:
+                    color: "Black"
+                    battery_life: "30 hours"
+                isPublished:
+                  type: boolean
+                  description: "Whether the product is publicly visible"
+                  example: true
+                youtubeLinks:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  description: "YouTube video links related to the product"
+                  example:
+                    - "https://youtube.com/watch?v=abc123"
+                manual:
+                  type: array
+                  items:
+                    type: string
+                  description: "User manual links"
+                  example:
+                    - "https://example.com/manual.pdf"
+                product_details:
+                  type: string
+                  description: "Additional product details"
+                  example: "Noise-canceling Bluetooth headphones with touch controls"
+                multiShowIn:
+                  type: array
+                  items:
+                    type: string
+                  description: "Multiple categories where the product is shown"
+                  example: ["New Arrival", "Recommended"]
+                features:
+                  type: boolean
+                  description: "Whether the product has special features"
+                  example: true
       responses:
         '200':
           description: Product added successfully
