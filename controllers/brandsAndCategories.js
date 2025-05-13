@@ -109,7 +109,7 @@ exports.getBrandsOrcategories = (req, res) => {
 exports.brandsWithProducts = async (req, res, next) => {
     try {
         // Query to fetch brands and their products
-        const query = `SELECT b.brand_name, p."brandId",p.id AS productId,p.name AS productName FROM "Brands" b INNER JOIN "Products" p ON b.id = p."brandId"::integer WHERE "p.isPublished" = true  ORDER BY b.id;`;
+        const query = `SELECT b.brand_name, p."brandId",p.id AS productId,p.name AS productName FROM "Brands" b INNER JOIN "Products" p ON b.id = p."brandId"::integer where p."isPublished" = true ORDER BY b.id;`;
 
         const result = await client.query(query);
 
@@ -139,7 +139,7 @@ exports.brandsWithProducts = async (req, res, next) => {
 exports.categoriesWithProducts = async (req, res, next) => {
     try {
         // Query to fetch categories and their products
-        const query = `SELECT c."Category_name",c.id as category_id,p.name as productName,p.id as productId FROM "Categories" c INNER JOIN "Products" p ON c.id = p."categoryId"::integer WHERE "p.isPublished" = true ORDER BY c."Category_name",p.id;`;
+        const query = `SELECT c."Category_name",c.id as category_id,p.name as productName,p.id as productId FROM "Categories" c INNER JOIN "Products" p ON c.id = p."categoryId"::integer where p."isPublished" = true ORDER BY c."Category_name",p.id;`;
         const result = await client.query(query);
         if (result.rowCount < 1) {
             return res.status(404).json({ success: false, message: "No categories or products found", responsecode: 1 });
