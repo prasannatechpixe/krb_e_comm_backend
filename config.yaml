@@ -21,6 +21,19 @@ tags:
     description: Admin related operations  
   - name: Products
     description: Product related operations  
+  - name: Brands And Categories
+    description: Brands and Categories operations  
+  - name: Cart
+    description: Cart related operations  
+  - name: wishlist
+    description: Wishlist repated Operations  
+  - name: Payments
+    description: Payment related operations  
+  - name: Address
+    description: Address related operations
+  - name: Orders
+    description: Order related operations  
+
 
 components:
   securitySchemes:
@@ -308,9 +321,93 @@ paths:
         "500":
           description: Internal Server Error
 
+  /brands/create:
+    post:
+      summary: create the barand or category
+      tags:
+        - Brands And Categories
+      requestBody:
+        required: true
+        contenet:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: enter the user token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+                brand_name:
+                  type: string
+                  description: enter either brand name or category name
+                  example: sony
+                category_name:
+                  type: string
+                  description: enter either brand name or category name
+                  example: Electronics
+      responses:
+        '201':
+          description: brand or category created successfully  
+        '400':
+          description: Missing required fields    
+        '401':
+          description: User not found or unauthorized  
+        '403':
+          description: Unauthorized to perform this action     
+        '409': 
+          description: Unable to add
+        '500':
+          description: internal server error    
+
+  /brands/getbrandorcats:
+    post:
+      summary: get the brands and the categories
+      tags:
+        - Brands And Categories
+      requestBody:
+        required: true
+        contenet:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: enter the user description
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+      responses:
+        '201':
+          description: brands and categories are retrived successfully
+        '409':
+          description: Unable to fetch
+        '500':
+          description: Internal server error
+
+  /brands/brandsWithProducts:
+    get:
+      summary: get the Brands With Products
+      tags:
+        - Brands And Categories
+      responses:
+        '200':
+          descrition: Brands with Products retrived successfully
+        '500': 
+          description: internal server error                  
+
+  /brands/categoriesWithProducts:
+    get:
+      summary: get the categories With Products
+      tags:
+        - Brands And Categories
+      responses:
+        '200':
+          descrition: categories With Products retrived successfully
+        '500': 
+          description: internal server error                  
+
   /products/add:
     post:
-      summary: Add a product
+      summary: "Add a new product"
       tags:
         - Products
       requestBody:
@@ -322,115 +419,1040 @@ paths:
               properties:
                 name:
                   type: string
-                  description: "Name of the product"
-                  example: "Wireless Headphones"
+                  example: "Wireless Bluetooth Headphones"
                 description:
                   type: string
-                  description: "Detailed description of the product"
-                  example: "High-quality wireless headphones with noise cancellation"
+                  example: "All-inclusive: Detector for treasure hunters..."
                 price_in_usd:
                   type: number
-                  format: decimal
-                  description: "Price in USD"
-                  example: 199.99
+                  example: 10
                 price_in_inr:
                   type: number
-                  format: decimal
-                  description: "Price in INR"
-                  example: 14999.99
+                  example: 800
                 discountPrice:
                   type: number
-                  format: float
-                  description: "Discounted price"
-                  example: 179.99
+                  example: 10
                 stock:
                   type: integer
-                  description: "Stock quantity available"
-                  example: 50
+                  example: 3
                 categoryId:
-                  type: string
-                  description: "Category ID the product belongs to"
-                  example: "electronics"
+                  type: integer
+                  example: 10
                 brandId:
-                  type: string
-                  description: "Brand ID the product belongs to"
-                  example: "sony"
-                useCase:
-                  type: boolean
-                  description: "Whether the product is meant for a specific use case"
-                  example: false
+                  type: integer
+                  example: 15
                 rating:
                   type: number
-                  format: float
-                  description: "Average rating of the product"
-                  example: 4.5
-                images:
-                  type: array
-                  items:
-                    type: string
-                    format: uri
-                  description: "List of image URLs for the product"
-                  example:
-                    - "https://example.com/image1.jpg"
-                    - "https://example.com/image2.jpg"
+                  example: 5
                 showIn:
                   type: array
                   items:
                     type: string
-                  description: "Where the product should be displayed"
-                  example: ["Featured", "Best Selling"]
+                  description: "Places where the product should be displayed"
+                  example: ["Recommended", "BestSelling", "NewArrival"]
                 tags:
                   type: string
-                  description: "Search tags related to the product"
-                  example: "wireless, headphones, audio"
-                Availability:
-                  type: string
-                  enum: ["In Stock", "Out of Stock", "Pre-order"]
-                  description: "Availability status of the product"
-                  example: "In Stock"
+                  example: "metals bronze"
                 specifications:
                   type: object
-                  description: "Product specifications such as color, size, etc."
+                  additionalProperties:
+                    type: string
                   example:
-                    color: "Black"
-                    battery_life: "30 hours"
+                    color: "red"
+                    detects: "metals"
                 isPublished:
                   type: boolean
-                  description: "Whether the product is publicly visible"
                   example: true
+                Availability:
+                  type: string
+                  example: "In Stock"
                 youtubeLinks:
                   type: array
                   items:
                     type: string
-                    format: uri
-                  description: "YouTube video links related to the product"
+                  description: "YouTube links related to the product"
                   example:
-                    - "https://youtube.com/watch?v=abc123"
+                    - "https://youtube.com/example"
+                    - "https://youtube.com/elpmaxe"
                 manual:
                   type: array
                   items:
                     type: string
-                  description: "User manual links"
+                  description: "Manual links related to the product"
                   example:
-                    - "https://example.com/manual.pdf"
+                    - "https://example.com/manual"
                 product_details:
                   type: string
-                  description: "Additional product details"
-                  example: "Noise-canceling Bluetooth headphones with touch controls"
-                multiShowIn:
+                  example: "Detailed product description goes here..."
+                features:
+                  type: boolean
+                  example: true
+                useCase:
+                  type: boolean
+                  example: true
+                token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                images:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: "Product added successfully"
+        '400':
+          description: "Bad request - Missing or invalid fields"
+        '403':
+          description: "Access denied - Admin role required"
+        '500':
+          description: "Server error - Failed to add product"
+
+  /products/getall:
+    post:
+      summary: get all the products
+      tags:
+      - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: place the user jwt token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+                page:
+                  type: integer
+                  description: Page number for pagination (default is 1)
+                  example: 1
+                limit:
+                  type: integer
+                  description: Number of emails per page (default is 10)
+                  example: 10
+                showIn:
+                  type: string
+                  description: place the shows in type
+                  example: All
+      responses:
+        '200':         
+          description: success   
+        '400':
+          description: Missing Fields
+        '403':
+          description: Unauthorized access
+        '404':
+          description: No Products found
+        '500':
+          description: Internal server error   
+
+  /products/byid/{id}:
+    post:
+      summary: get the product based on id
+      tags:
+        - Products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the product"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '200':
+          description: "Product retrieved successfully"
+        '400':
+          description: "Product ID is required"
+        '401':
+          description: "User not found"
+        '403':
+          description: "Product is not published yet"
+        '404':
+          description: "Product not found"
+        '500':
+          description: "Internal server error"
+         
+  /products/updateproduct:
+    put:
+      summary: "Add a new product"
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Wireless Bluetooth Headphones"
+                description:
+                  type: string
+                  example: "All-inclusive: Detector for treasure hunters..."
+                price_in_usd:
+                  type: number
+                  example: 10
+                price_in_inr:
+                  type: number
+                  example: 800
+                discountPrice:
+                  type: number
+                  example: 10
+                stock:
+                  type: integer
+                  example: 3
+                categoryId:
+                  type: integer
+                  example: 10
+                brandId:
+                  type: integer
+                  example: 15
+                rating:
+                  type: number
+                  example: 5
+                showIn:
                   type: array
                   items:
                     type: string
-                  description: "Multiple categories where the product is shown"
-                  example: ["New Arrival", "Recommended"]
+                  description: "Places where the product should be displayed"
+                  example: ["Recommended", "BestSelling", "NewArrival"]
+                tags:
+                  type: string
+                  example: "metals bronze"
+                specifications:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example:
+                    color: "red"
+                    detects: "metals"
+                isPublished:
+                  type: boolean
+                  example: true
+                Availability:
+                  type: string
+                  example: "In Stock"
+                youtubeLinks:
+                  type: array
+                  items:
+                    type: string
+                  description: "YouTube links related to the product"
+                  example:
+                    - "https://youtube.com/example"
+                    - "https://youtube.com/elpmaxe"
+                manual:
+                  type: array
+                  items:
+                    type: string
+                  description: "Manual links related to the product"
+                  example:
+                    - "https://example.com/manual"
+                product_details:
+                  type: string
+                  example: "Detailed product description goes here..."
                 features:
                   type: boolean
-                  description: "Whether the product has special features"
                   example: true
+                useCase:
+                  type: boolean
+                  example: true
+                token:
+                  type: string
+                  format: jwt
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                images:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: "Product added successfully"
+        '400':
+          description: "Bad request - Missing or invalid fields"
+        '403':
+          description: "Access denied - Admin role required"
+        '500':
+          description: "Server error - Failed to add product"
+
+  /products/{id}:
+    delete:
+      summary: get the product based on id
+      tags:
+        - Products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the product"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
       responses:
         '200':
-          description: Product added successfully
+          description: "Product retrieved successfully"
+        '400':
+          description: "Product ID is required"
+        '401':
+          description: "User not found"
         '403':
-          description: Access denied - Admin role required  
+          description: "Product is not published yet"
+        '404':
+          description: "Product not found"
         '500':
-          description: Failed to add product
+          description: "Internal server error"
+
+  /products/productmanualupload:
+    put:
+      summary: upload the manuals
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for admin verification"
+                productId:
+                  type: integer
+                  description: "Unique ID of the product"
+                manual:
+                  type: string
+                  format: binary
+                  description: "PDF file containing the product manual"
+      responses:
+        '201':
+          description: "Manual uploaded successfully"
+        '400':
+          description: "Missing required fields or invalid file format"
+        '403':
+          description: "Access denied: Admin role required"
+        '404':
+          description: "Product not found"
+        '500':
+          description: "Internal server error"
+
+  /products/searchProduct:
+    post:
+      summary: search the required product
+      tags:
+        - Products
+      parameters:
+       - name: SearchKey
+      in: query
+      required: true
+      schema:
+        type: string
+      description: "Search keyword for product name or description"
+      responses:
+        '200':
+          description: "Products found matching the search criteria"
+        '400':
+          description: "Search key is required"
+        '404':
+          description: "No products found matching the search criteria"
+        '500':
+          description: "Internal server error"
+        
+  /cart/create:
+    post:
+      summary: add the product to the cart
+      tags:
+        - Cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: enter the user token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+                product_id:
+                  type: number
+                  description: enter the product id
+                  example: 201
+                quantity:
+                  type: number
+                  description: quantity you required
+                  example: 3  
+      responses:
+        '200':
+          description: success
+        '201':
+          description: Moved to cart 
+        '400':
+          description: Missing required fields
+        '401':
+          description: user not foung
+        '422':    
+          description: Product not added to cart
+        '500': 
+          description: Internal server error
+           
+  /cart/:
+    post:
+      summary: get the user cart items
+      tags:
+        - Cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: enter the user token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+      responses:
+        '200':
+          description: cart item retrieved successfully
+        '401':
+          description: User not found
+        '500':
+          description: Internal server Error
+
+  /cart/byid/{id}:
+    post:
+      summary: get the cart item using the cart id
+      tags:
+        - Cart
+      parameters:
+        - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: "Unique ID of the cart"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '200':
+          description: "Cart details retrieved successfully"
+        '400':
+          description: "Missing required details"
+        '401':
+          description: "User not found"
+        '404':
+          description: "Cart not found"
+        '500':
+          description: "Internal server error"
+ 
+  /cart/{id}:
+    put:
+      summary: update the cart item using the cart id
+      tags:
+        - Cart
+      parameters:
+        - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: "Unique ID of the cart"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+                quantity:
+                  type: number
+                  description: enter the quantity of product  
+      responses:
+        '200':
+          description: "Cart details updated successfully"
+        '400':
+          description: "Missing required details"
+        '401':
+          description: "User not found"
+        '404':
+          description: "Cart not found"
+        '500':
+          description: "Internal server error"
+
+  /cart/delete/{id}:
+    delete:
+      summary: delete the cart item using the cart id
+      tags:
+        - Cart
+      parameters:
+        - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: "Unique ID of the cart"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+                quantity:
+                  type: number
+                  description: enter the quantity of product  
+      responses:
+        '200':
+          description: "Cart details deleted successfully"
+        '400':
+          description: "Missing required details"
+        '401':
+          description: "User not found"
+        '404':
+          description: "Cart not found"
+        '500':
+          description: "Internal server error"
+  
+  /cart/cartcount:
+    post:
+      summary: add the product to the cart
+      tags:
+        - Cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: enter the user token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+      responses:
+        '200':
+          description: success
+        '400':
+          description: Missing required fields
+        '401':
+          description: user not foung
+        '500': 
+          description: Internal server error
+
+  /wishlist/create:
+    post:
+      summary: add the product to whishlist
+      tags:     
+        - wishlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: enter the user token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+                product_id:   
+                  type: number
+                  description: enter the product id
+                  example: 2
+      responses:
+        '201':
+          description: Added to wishlist
+        '400':
+          description: Missing required fields 
+        '401':
+          description: User not found or unauthorized  
+        '409':
+          description: Item already in wishlist   
+        '500':
+          description: Internal server error  
+
+  /wishlist/getall:
+    post:
+      summary: get all the wish list products
+      tags:
+        - wishlist
+      requestBody:
+        required: true
+        content: 
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: enter the user token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+      responses:
+        '200':
+          description: success or No items in wishlist
+        '401':
+          description: User not found
+        '500':
+          description: Internal server error    
+
+  /wishlist/{id}:
+    post:
+      summary: enter the wishlist id to get the wishlist product
+      tags:
+        - wishlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the wishlist item"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '200':
+          description: "Wishlist item retrieved successfully"
+        '400':
+          description: "Missing required fields"
+        '404':
+          description: "Wishlist item or user not found"
+        '500':
+          description: "Internal server error"
+          
+  /wishlist/delete/{id}:
+    delete:
+      summary: enter the wishlist id to get the wishlist product
+      tags:
+        - wishlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the wishlist item"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '200':
+          description: "Wishlist item retrieved successfully"
+        '400':
+          description: "Missing required fields"
+        '404':
+          description: "Wishlist item or user not found"
+        '500':
+          description: "Internal server error"
+          
+  /payments/checkorderstatus:
+    post:
+      summary: payment related responses
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+                PaypalOrderId:
+                  type: string
+                  description: "PayPal order ID"
+                productIds:
+                  type: array
+                  items:
+                    type: string
+                  description: "Array of product IDs associated with the order"
+                paypal_response:
+                  type: object
+                  description: "Response details from PayPal"
+      responses:
+        '200':
+          description: "Order status retrieved successfully and order placed if applicable"
+        '400':
+          description: "Missing required parameters or invalid product ID format"
+        '401':
+          description: "User not found"
+        '500':
+          description: "Internal server error or PayPal API error"
+          
+  /address/create:
+    post:
+      summary: add the billing address
+      tags:
+        - Address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+                fullName:
+                  type: string
+                  description: "Full name of the recipient"
+                addressLine:
+                  type: string
+                  description: "Address line of the recipient"
+                city:
+                  type: string
+                  description: "City of the recipient"
+                state:
+                  type: string
+                  description: "State of the recipient"
+                postalCode:
+                  type: string
+                  description: "Postal code of the recipient"
+                country:
+                  type: string
+                  description: "Country of the recipient"
+                phoneNumber:
+                  type: string
+                  description: "Phone number of the recipient"
+                email:
+                  type: string
+                  description: "Email of the recipient"
+      responses:
+        '201':
+          description: "Billing address successfully added"
+        '400':
+          description: "Missing required fields"
+        '401':
+          description: "User not found or unauthorized"
+        '409':
+          description: "Unable to add billing address due to conflict"
+        '500':
+          description: "Internal server error"
+  
+  /address/update:
+    post:
+      summary: update billing address
+      tags:
+        - Address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+                fullName:
+                  type: string
+                  description: "Full name of the recipient"
+                addressLine:
+                  type: string
+                  description: "Address line of the recipient"
+                city:
+                  type: string
+                  description: "City of the recipient"
+                state:
+                  type: string
+                  description: "State of the recipient"
+                postalCode:
+                  type: string
+                  description: "Postal code of the recipient"
+                country:
+                  type: string
+                  description: "Country of the recipient"
+                phoneNumber:
+                  type: string
+                  description: "Phone number of the recipient"
+                email:
+                  type: string
+                  description: "Email of the recipient"
+                add_id:
+                  type: integer
+                  description: "Billing address ID to be updated"
+      responses:
+        '201':
+          description: "Billing address successfully updated"
+        '400':
+          description: "Missing required fields"
+        '401':
+          description: "User not found or unauthorized"
+        '409':
+          description: "Unable to update billing address due to conflict"
+        '500':
+          description: "Internal server error"
+          
+  /address/get:
+    post:
+      summary: update billing address
+      tags:
+        - Address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '201':
+          description: "Billing address successfully updated"
+        '400':
+          description: "Missing required fields"
+        '401':
+          description: "User not found or unauthorized"
+        '409':
+          description: "Unable to update billing address due to conflict"
+        '500':
+          description: "Internal server error"
+          
+  /orders/create:
+    post:
+      summary: create Order
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+                cartId:
+                  type: integer
+                  description: "Cart ID if ordering from the cart"
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId:
+                        type: integer
+                        description: "Product ID"
+                      quantity:
+                        type: integer
+                        description: "Quantity of the product"
+                addressId:
+                  type: integer
+                  description: "Billing address ID"
+                paymentMethod:
+                  type: string
+                  description: "Payment method used for the order"
+                  enum:
+                    - Credit Card
+                    - Debit Card
+                    - PayPal
+                    - UPI
+                    - Bank Transfer
+                    - Other
+      responses:
+        '201':
+          description: "Order placed successfully"
+        '400':
+          description: "Missing required details or invalid payment method"
+        '401':
+          description: "User not found"
+        '404':
+          description: "Cart or billing address not found"
+        '500':
+          description: "Internal server error or order processing failure"
+             
+  /orders/:
+    post:
+      summary: get all orders
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '201':
+          description: "Order placed successfully"
+        '400':
+          description: "Missing required details or invalid payment method"
+        '401':
+          description: "User not found"
+        '404':
+          description: "Cart or billing address not found"
+        '500':
+          description: "Internal server error or order processing failure"
+
+  /orders/byid/{id}:
+    post:
+      summary: get the order elemts by using the id 
+      tags:
+        - Orders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the order"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '200':
+          description: "Order details retrieved successfully"
+        '400':
+          description: "Missing required details"
+        '401':
+          description: "User not found"
+        '500':
+          description: "Internal server error"
+                 
+  /orders/{id}:
+    delete:
+      summary: delete the order 
+      tags:
+        - Orders
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: "Unique ID of the order to be deleted"
+      responses:
+        '200':
+          description: "Order deleted successfully"
+        '404':
+          description: "Order not found"
+        '500':
+          description: "Internal server error"
+                        
+  /admincalls/alluserorders:
+    post:
+      summary: Admin can get the orders
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+                page:
+                  type: integer
+                  description: "Page number for pagination"
+                limit:
+                  type: integer
+                  description: "Number of orders per page"
+      responses:
+        '200':
+          description: "Orders retrieved successfully"
+        '400':
+          description: "Missing required fields (token, page, or limit)"
+        '401':
+          description: "User not found or unauthorized"
+        '500':
+          description: "Internal server error"
+                            
+  /admincalls/getByid/{id}:
+    post:
+      summary: get the order by using the id
+      tags:
+        - Admin
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: "Unique ID of the order"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "Authentication token for user verification"
+      responses:
+        '200':
+          description: "Order details retrieved successfully"
+        '400':
+          description: "Missing required details"
+        '401':
+          description: "User not found or unauthorized"
+        '500':
+          description: "Internal server error"
+                                      

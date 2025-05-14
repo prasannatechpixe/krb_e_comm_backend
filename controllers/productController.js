@@ -178,11 +178,11 @@ exports.createProduct = async (req, res) => {
   } = req.body;
 
   // Helper function to validate JSON
-  const parseJSON = (data) => {
+  const parseJSON = (data, fallback = null) => {
     try {
-      return JSON.parse(data);
+      return typeof data === 'string' ? JSON.parse(data) : data;
     } catch (error) {
-      return null; // Return null if parsing fails
+      return fallback;
     }
   };
 
@@ -205,7 +205,7 @@ exports.createProduct = async (req, res) => {
     isNull(youtubeLinks) ||
     isNull(manual) ||
     !product_details ||
-    isNull(features),
+    isNull(features) ||
     isNull(useCase)
   ) {
     return res.status(400).json({
@@ -215,13 +215,15 @@ exports.createProduct = async (req, res) => {
     });
   }
 
-  // Parse JSON fields
-  const parsedSpecifications = parseJSON(specifications, []);
-  const parsedYoutubeLinks = parseJSON(youtubeLinks, []);
-  const parsedManual = parseJSON(manual, []);
-  const parsedshowIn = parseJSON(showIn, []);
-  // const parsedFeatures = parseJSON(features, []);
+  // Split `showIn`, `youtubeLinks`, and `manual` into arrays
+  const parsedShowIn = showIn.split(',').map(item => item.trim());
+  const parsedYoutubeLinks = youtubeLinks.split(',').map(item => item.trim());
+  const parsedManual = manual.split(',').map(item => item.trim());
 
+  // Parse JSON fields
+  const parsedSpecifications = parseJSON(specifications, {});
+  const parsedTags = parseJSON(tags, []);
+  
   // Validate parsed specifications
   if (specifications && !parsedSpecifications) {
     return res.status(400).json({
@@ -249,7 +251,7 @@ exports.createProduct = async (req, res) => {
         INSERT INTO public."Products"(
           name, description, price_in_usd, price_in_inr, "discountPrice", stock, 
           "categoryId", "brandId", rating, images, "showIn", tags, specifications, 
-          "isPublished", "Availability", "youtubeLinks", manual, product_details, features,"useCase"
+          "isPublished", "Availability", "youtubeLinks", manual, product_details, features, "useCase"
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`;
 
@@ -263,16 +265,16 @@ exports.createProduct = async (req, res) => {
         categoryId,
         brandId,
         parseFloat(rating),
-        JSON.stringify(imageUrls), // Convert array to JSON
-        parsedshowIn,
+        JSON.stringify(imageUrls),
+        JSON.stringify(parsedShowIn), // store the parsed array here
         tags,
-        parsedSpecifications, // JSON data
+        parsedSpecifications,
         isPublished === "true" || isPublished === true,
         Availability,
-        parsedYoutubeLinks, // JSON data
-        parsedManual, // JSON data
+        JSON.stringify(parsedYoutubeLinks), // store the parsed array here
+        JSON.stringify(parsedManual), // store the parsed array here
         product_details,
-        features, // JSON data
+        features,
         useCase
       ];
 
@@ -281,7 +283,7 @@ exports.createProduct = async (req, res) => {
           if (err) {
             return res.status(500).json({ success: false, message: err.message, responsecode: 500 });
           } else if (insertedProduct.rowCount === 1) {
-            return res.status(201).json({ success: true, message: "Product added successfully", responsecode: 4, });
+            return res.status(201).json({ success: true, message: "Product added successfully", responsecode: 4 });
           } else {
             return res.status(500).json({ success: false, message: "Failed to insert product", responsecode: 5 });
           }
@@ -294,9 +296,6 @@ exports.createProduct = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message, debug: error, responsecode: 6 });
   }
 };
-
-
-
 
 // manual pdf uplaod (Admin Only)
 exports.productManual = async (req, res) => {
@@ -483,9 +482,6 @@ exports.updateProduct = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message, debug: error, responsecode: 6 });
   }
 };
-
-
-
 
 // Delete a product (Admin Only)
 exports.deleteProduct = async (req, res, next) => {
