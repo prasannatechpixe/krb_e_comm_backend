@@ -266,11 +266,27 @@ exports.UpdateOrder = async (req, res) => {
 
 // Delete a Order by ID
 exports.deleteOrder = async (req, res) => {
+  const { id } = req.params;
+
   try {
-    const deleted = await Order.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ success: false, message: 'Order not found' });
-    res.status(200).json({ success: true, message: 'Order deleted successfully' });
+    // Check if the order exists
+    const checkQuery = `SELECT * FROM "Orders" WHERE id = $1`;
+    const checkResult = await client.query(checkQuery, [id]);
+
+    if (checkResult.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Delete the order
+    const deleteQuery = `DELETE FROM "Orders" WHERE id = $1`;
+    const deleteResult = await client.query(deleteQuery, [id]);
+
+    if (deleteResult.rowCount === 1) {
+      return res.status(200).json({ success: true, message: 'Order deleted successfully' });
+    } else {
+      return res.status(500).json({ success: false, message: 'Failed to delete order' });
+    }
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -323,65 +323,66 @@ paths:
 
   /brands/create:
     post:
-      summary: create the barand or category
+      summary: "Create a brand or category"
       tags:
-        - Brands And Categories
+        - "Brands And Categories"
       requestBody:
         required: true
-        contenet:
+        content:
           application/json:
             schema:
               type: object
               properties:
                 token:
                   type: string
-                  description: enter the user token
-                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+                  description: "Enter the user token"
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4"
                 brand_name:
                   type: string
-                  description: enter either brand name or category name
-                  example: sony
+                  description: "Enter the brand name"
+                  example: "Sony"
                 category_name:
                   type: string
-                  description: enter either brand name or category name
-                  example: Electronics
+                  description: "Enter the category name"
+                  example: "Electronics"
       responses:
         '201':
-          description: brand or category created successfully  
+          description: "Brand or category created successfully"
         '400':
-          description: Missing required fields    
+          description: "Missing required fields"
         '401':
-          description: User not found or unauthorized  
+          description: "User not found or unauthorized"
         '403':
-          description: Unauthorized to perform this action     
+          description: "Unauthorized to perform this action"
         '409': 
-          description: Unable to add
+          description: "Unable to add"
         '500':
-          description: internal server error    
+          description: "Internal server error"
+
 
   /brands/getbrandorcats:
     post:
-      summary: get the brands and the categories
+      summary: "Get the brands and the categories"
       tags:
-        - Brands And Categories
+        - "Brands And Categories"
       requestBody:
         required: true
-        contenet:
+        content:
           application/json:
             schema:
               type: object
               properties:
                 token:
                   type: string
-                  description: enter the user description
-                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4
+                  description: "Enter the user token"
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InByYXNhbm5hQHRlY2hwaXhlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ3MDM0Njk0LCJleHAiOjE3NDcwNjcwOTR9.MzFhV6ynRUYqkisWER7lCi5FdbLs3fpIuj-Xan5gKa4"
       responses:
         '201':
-          description: brands and categories are retrived successfully
+          description: "Brands and categories retrieved successfully"
         '409':
-          description: Unable to fetch
+          description: "Unable to fetch data"
         '500':
-          description: Internal server error
+          description: "Internal server error"
 
   /brands/brandsWithProducts:
     get:
@@ -594,6 +595,9 @@ paths:
             schema:
               type: object
               properties:
+                id:
+                  type: number
+                  example: 1
                 name:
                   type: string
                   example: "Wireless Bluetooth Headphones"
@@ -755,13 +759,13 @@ paths:
           description: "Internal server error"
 
   /products/searchProduct:
-    post:
+    get:
       summary: search the required product
       tags:
         - Products
       parameters:
-       - name: SearchKey
-      in: query
+       -  name: SearchKey
+          in: query
       required: true
       schema:
         type: string
@@ -845,11 +849,11 @@ paths:
         - Cart
       parameters:
         - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-      description: "Unique ID of the cart"
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the cart"
       requestBody:
         required: true
         content:
@@ -879,11 +883,11 @@ paths:
         - Cart
       parameters:
         - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-      description: "Unique ID of the cart"
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the cart"
       requestBody:
         required: true
         content:
@@ -916,11 +920,11 @@ paths:
         - Cart
       parameters:
         - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-      description: "Unique ID of the cart"
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "Unique ID of the cart"
       requestBody:
         required: true
         content:

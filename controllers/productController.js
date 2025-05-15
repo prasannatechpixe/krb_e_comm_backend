@@ -300,63 +300,76 @@ exports.createProduct = async (req, res) => {
 // manual pdf uplaod (Admin Only)
 exports.productManual = async (req, res) => {
   const { token, productId } = req.body;
+
   if (!token || !productId) {
     return res.status(400).json({ success: false, message: "Missing required fields (token or productId)", responsecode: 1 });
-  } else {
-    if (!req.file || req.file.mimetype !== "application/pdf") {
-      return res.status(400).json({ success: false, message: "Invalid or missing file (only PDF allowed)", responsecode: 2 });
+  }
+
+  if (!req.file || req.file.mimetype !== "application/pdf") {
+    return res.status(400).json({ success: false, message: "Invalid or missing file (only PDF allowed)", responsecode: 2 });
+  }
+
+  // Ensure domain is properly set
+  if (!domain || !req.file.filename) {
+    return res.status(500).json({ success: false, message: "File upload configuration error", responsecode: 9 });
+  }
+
+  const pdfUrl = `https://${domain}/uploads/productManuals/${req.file.filename}`;
+
+  getUserProfileFromToken(token, async (err, foundUser) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message, responsecode: 3 });
     }
 
-    const pdfUrl = `https://${domain}/uploads/productManuals/${req.file.filename}`;
+    if (foundUser.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied: Admin role required", responsecode: 4 });
+    }
 
-    getUserProfileFromToken(token, async (err, foundUser) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: err.message, responsecode: 3 });
-      } else if (foundUser.role !== "admin") {
-        return res.status(403).json({ success: false, message: "Access denied: Admin role required", responsecode: 4 });
-      } else {
-        try {
-          const checkQuery = `SELECT manual FROM public."Products" WHERE id = $1`;
-          const checkResult = await client.query(checkQuery, [productId]);
+    try {
+      const checkQuery = `SELECT manual FROM public."Products" WHERE id = $1`;
+      const checkResult = await client.query(checkQuery, [productId]);
 
-          if (checkResult.rows.length === 0) {
-            return res.status(404).json({ success: false, message: "Product not found", responsecode: 5 });
+      if (checkResult.rowCount === 0) {
+        return res.status(404).json({ success: false, message: "Product not found", responsecode: 5 });
+      }
+
+      const existingManual = checkResult.rows[0].manual;
+
+      if (existingManual && existingManual.length > 0) {
+        const oldPdfUrl = existingManual[0];
+
+        if (oldPdfUrl.includes('/uploads/productManuals/')) {
+          const oldFileName = oldPdfUrl.split('/uploads/productManuals/')[1];
+          const oldFilePath = path.join(__dirname, '..', 'uploads', 'productManuals', oldFileName);
+
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlink(oldFilePath, (err) => {
+              if (err) {
+                console.error(`Failed to delete old manual file: ${oldFilePath}`, err);
+              } else {
+                console.log(`Old manual file deleted: ${oldFilePath}`);
+              }
+            });
           }
-
-          const existingManual = checkResult.rows[0].manual;
-          if (existingManual && existingManual.length > 0) {
-            const oldPdfUrl = existingManual[0];
-            const oldFileName = oldPdfUrl.split('/uploads/productManuals/')[1];
-            const oldFilePath = path.join(__dirname, '..', 'uploads', 'productManuals', oldFileName);
-
-            if (fs.existsSync(oldFilePath)) {
-              fs.unlink(oldFilePath, (err) => {
-                if (err) {
-                  console.error(`Failed to delete old manual file: ${oldFilePath}`, err);
-                } else {
-                  console.log(`Old manual file deleted: ${oldFilePath}`);
-                }
-              });
-            }
-          }
-
-          // Update the database with the new manual
-          const updateQuery = `UPDATE public."Products" SET manual = $1 WHERE id = $2`;
-          const updateResult = await client.query(updateQuery, [JSON.stringify([pdfUrl]), productId]);
-
-          if (updateResult.rowCount === 1) {
-            return res.status(201).json({ success: true, message: "Manual uploaded successfully", responsecode: 6 });
-          } else {
-            return res.status(500).json({ success: false, message: "Failed to update manual", responsecode: 7 });
-          }
-        } catch (error) {
-          console.error("Error during manual upload:", error);
-          return res.status(500).json({ success: false, message: error.message, debug: error, responsecode: 8 });
         }
       }
-    });
-  }
+
+      // Update the database with the new manual
+      const updateQuery = `UPDATE public."Products" SET manual = $1 WHERE id = $2`;
+      const updateResult = await client.query(updateQuery, [JSON.stringify([pdfUrl]), productId]);
+
+      if (updateResult.rowCount === 1) {
+        return res.status(201).json({ success: true, message: "Manual uploaded successfully", responsecode: 6 });
+      } else {
+        return res.status(500).json({ success: false, message: "Failed to update manual", responsecode: 7 });
+      }
+    } catch (error) {
+      console.error("Error during manual upload:", error);
+      return res.status(500).json({ success: false, message: error.message, debug: error, responsecode: 8 });
+    }
+  });
 };
+
 
 //Update Product by admin user
 exports.updateProduct = async (req, res) => {
@@ -381,39 +394,49 @@ exports.updateProduct = async (req, res) => {
     product_details,
     features,
     token,
-    useCase
+    useCase,
   } = req.body;
 
-  const parseJSON = (data, defaultValue = []) => {
+  // Helper function to validate JSON
+  const parseJSON = (data, defaultValue = null) => {
     try {
-      return JSON.parse(data);
+      return typeof data === 'string' ? JSON.parse(data) : data;
     } catch (error) {
       return defaultValue;
     }
   };
 
+  // Validate required fields
   if (!id || !token) {
-    return res.status(400).json({ success: false, message: "Missing required fields (id or token)", responsecode: 1 });
+    return res.status(400).json({
+      success: false,
+      message: "Missing required fields (id or token)",
+      responsecode: 1,
+    });
   }
 
   try {
+    // Verify user role
     getUserProfileFromToken(token, async (err, foundUser) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message, responsecode: 3 });
       }
-
       if (!foundUser || foundUser.role !== "admin") {
         return res.status(403).json({ success: false, message: "Access denied: Admin role required", responsecode: 7 });
       }
 
+      // Prepare image URLs
       const imageUrls = req.files.map((file) => `https://${domain}/uploads/productImages/${file.filename}`);
 
-      const parsedSpecifications = parseJSON(specifications, []);
+      // Parse JSON fields
+      const parsedSpecifications = parseJSON(specifications, {});
       const parsedYoutubeLinks = parseJSON(youtubeLinks, []);
       const parsedManual = parseJSON(manual, []);
       const parsedFeatures = parseJSON(features, []);
-      const parsedshowIn = parseJSON(showIn, []);
+      const parsedShowIn = parseJSON(showIn, []);
+      const parsedTags = parseJSON(tags, []);
 
+      // Build update query
       const updateQuery = `
         UPDATE public."Products"
         SET 
@@ -441,7 +464,6 @@ exports.updateProduct = async (req, res) => {
         WHERE id = $1
         RETURNING *;
       `;
-
       const updateValues = [
         id,
         name,
@@ -453,27 +475,38 @@ exports.updateProduct = async (req, res) => {
         categoryId || null,
         brandId || null,
         parseFloat(rating) || null,
-        imageUrls ? JSON.stringify(imageUrls) : null,
-        parsedshowIn || null,
-        tags || null,
-        parsedSpecifications || null,
+        imageUrls.length > 0 ? JSON.stringify(imageUrls) : null,
+        JSON.stringify(parsedShowIn),
+        JSON.stringify(parsedTags),
+        JSON.stringify(parsedSpecifications),
         isPublished === "true" || isPublished === true,
         Availability || null,
-        parsedYoutubeLinks || null,
-        parsedManual || null,
+        JSON.stringify(parsedYoutubeLinks),
+        JSON.stringify(parsedManual),
         product_details || null,
-        parsedFeatures,
-        useCase || false,
+        JSON.stringify(parsedFeatures),
+        useCase || null,
       ];
 
       try {
-        const result = await client.query(updateQuery, updateValues);
-
-        if (result.rowCount === 1) {
-          return res.status(200).json({ success: true, message: "Product updated successfully", data: result.rows[0], responsecode: 4 });
-        } else {
-          return res.status(404).json({ success: false, message: "Product not found", responsecode: 5 });
-        }
+        client.query(updateQuery, updateValues, async (dbError, result) => {
+          if (dbError) {
+            return res.status(500).json({ success: false, message: dbError.message, debug: dbError, responsecode: 6 });
+          } else if (result.rowCount === 1) {
+            return res.status(200).json({
+              success: true,
+              message: "Product updated successfully",
+              data: result.rows[0],
+              responsecode: 4,
+            });
+          } else {
+            return res.status(404).json({
+              success: false,
+              message: "Product not found",
+              responsecode: 5,
+            });
+          }
+        });
       } catch (dbError) {
         return res.status(500).json({ success: false, message: dbError.message, debug: dbError, responsecode: 6 });
       }
